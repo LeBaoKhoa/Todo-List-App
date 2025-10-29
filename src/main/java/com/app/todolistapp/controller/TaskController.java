@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import java.util.List;
 
 @Controller
-//@RequestMapping("/tasks")
+@RequestMapping("/tasks")
 public class TaskController {
     private final TaskService taskService;
 
@@ -22,6 +22,7 @@ public class TaskController {
     public String getTasks(Model model) {
         List<Task> tasks = taskService.getAllTasks();
         model.addAttribute("tasks", tasks);
+        System.out.println("Tasks: " + tasks);
         return "tasks";
     }
 }
