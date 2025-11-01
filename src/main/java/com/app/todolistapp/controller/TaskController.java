@@ -6,39 +6,64 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Controller
-//@RequestMapping("/tasks")
 public class TaskController {
+
     private final TaskService taskService;
 
     public TaskController(TaskService taskService) {
         this.taskService = taskService;
     }
 
-    @GetMapping
-    public String getTasks(Model model) {
-        List<Task> tasks = taskService.getAllTasks();
+    @GetMapping("/")
+    public String getTasks(Model model, @RequestParam(required = false) String search) {
+        List<Task> tasks = (search != null && !search.isEmpty())
+                ? taskService.searchTasks(search)
+                : taskService.getAllTasks();
+
+        long completedCount = tasks.stream().filter(Task::isCompleted).count();
         model.addAttribute("tasks", tasks);
+        model.addAttribute("completedCount", completedCount);
+        model.addAttribute("search", search);
         return "tasks";
     }
 
-    @PostMapping
-    public String createTasks(@RequestParam String title) {
-        List<Task> tasks = taskService.getAllTasks();
-        taskService.createTask(title);
+    @PostMapping("/create")
+    public String createTask(@RequestParam String title,
+                             @RequestParam String description,
+                             @RequestParam String deadline,
+                             @RequestParam Task.Priority priority) {
+        taskService.createTask(title, description, LocalDate.parse(deadline), priority);
+        return "redirect:/";
+    }
+
+    @GetMapping("/{id}/edit")
+    public String editTask(@PathVariable Long id, Model model) {
+        model.addAttribute("task", taskService.getTaskById(id));
+        return "edit";
+    }
+
+    @PostMapping("/{id}/update")
+    public String updateTask(@PathVariable Long id,
+                             @RequestParam String title,
+                             @RequestParam String description,
+                             @RequestParam String deadline,
+                             @RequestParam Task.Priority priority) {
+        taskService.updateTask(id, title, description, LocalDate.parse(deadline), priority);
         return "redirect:/";
     }
 
     @GetMapping("/{id}/delete")
-    public String deleteTasks(@PathVariable Long id) {
+    public String deleteTask(@PathVariable Long id) {
         taskService.deleteTask(id);
         return "redirect:/";
     }
 
     @GetMapping("/{id}/toggle")
-    public String toggleTasks(@PathVariable Long id) {
+    public String toggleTask(@PathVariable Long id) {
         taskService.toggleTask(id);
         return "redirect:/";
     }
